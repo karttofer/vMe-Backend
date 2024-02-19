@@ -12,7 +12,7 @@ import {
 } from "./models/requests";
 
 // Actions
-import { CREATE_NEW_USER } from "./actions";
+import { CREATE_NEW_USER, LOGIN } from "./actions";
 /*
  ROUTE CALLER
 */
@@ -36,7 +36,10 @@ export const routerCaller = (app, prisma: PrismaClient) => {
      * LOGIN
      */
     app.post("/login", (req: Request<{}, {}, ILoginPost>, res: Response) => {
-      res.send({ login: req.body });
+      LOGIN(req.body, prisma).then((actionRes) => {
+        console.log(actionRes);
+        res.send({ Login: actionRes });
+      });
     });
 
     /**
