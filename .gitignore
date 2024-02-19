@@ -3,5 +3,8 @@ node_modules
 # No migrations for now
 migrations
 
+# Ignore possible .js file
+*.js
+
 # Keep environment variables out of version control
 .env
