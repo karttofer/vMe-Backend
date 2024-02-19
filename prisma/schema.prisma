@@ -10,7 +10,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  email String  @unique
-  name  String?
+model Reviewer {
+  id            Int          @id @default(autoincrement())
+  nick_name     String
+  last_name     String
+  user_img      String
+  password      String
+  email         String       @unique
+  location      String
+  linkedIn_user String
+  github_user   String
+  Challenges    Challenges[]
+  role          ROLES        @default(USER)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([id, nick_name])
+}
+
+model Companies {
+  id           Int          @id @default(autoincrement())
+  company_name String       @unique
+  Challenges   Challenges[]
+}
+
+model Challenges {
+  name            String    @unique
+  creator         Reviewer  @relation(fields: [creator_id, creator_name], references: [id, nick_name])
+  creator_id      Int
+  creator_name    String
+  challenges_type String[]
+  company         Companies @relation(fields: [used_by_company], references: [company_name])
+  used_by_company String
+}
+
+enum ROLES {
+  USER
+  ADMIN
 }
