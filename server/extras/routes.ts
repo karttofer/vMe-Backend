@@ -21,15 +21,27 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     app.get("/", (req: Request, res: Response) => {
       res.send("Hello World!");
     });
+
+    /**
+     * USER
+     * */
     app.post(
       "/user/edit",
       (req: Request<{}, {}, IUserEditPost>, res: Response) => {
         res.send({ user: req.body });
       }
     );
+
+    /**
+     * LOGIN
+     */
     app.post("/login", (req: Request<{}, {}, ILoginPost>, res: Response) => {
       res.send({ login: req.body });
     });
+
+    /**
+     * CREATE ROUTES
+     */
     app.post(
       "/create/new-password",
       (req: Request<{}, {}, IResetPasswordPost>, res: Response) => {
