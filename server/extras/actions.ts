@@ -1,3 +1,4 @@
+//TODO See all the messages? We need to delete the status from the file and put them in the messages files
 // Deps
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcrypt";
@@ -11,6 +12,7 @@ import {
   P2003_PRISMA,
 } from "./messages/errors";
 import { USER_FOUND, MAGIC_LINK_RESET_PASSWORD_SENT } from "./messages/sucess";
+import { USER_ACTION_REPEATED_CAN_CONTINUE } from "./messages/alerts";
 
 // Models
 import {
@@ -20,7 +22,6 @@ import {
 } from "./models/requests";
 
 // Helpers
-import { toHumnaTime } from "../helpers/date";
 import { crypt } from "../helpers/bcrypt";
 
 // Configs
@@ -114,11 +115,22 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     token: crypt(SALT, user.email),
     expireToken: new Date(Date.now() + 1 * 60 * 60 * 1000),
   };
-
+  //TODO we need to make a better system for actions, allowing the user to make repeat actions
   try {
-    await prisma.reviewerActions.create({
-      data: updatedData,
+    const existAction = await prisma.reviewerActions.findUnique({
+      where: {
+        user_id: updatedData.user_id,
+      },
     });
+
+    !existAction
+      ? await prisma.reviewerActions.create({
+          data: updatedData,
+        })
+      : console.log({
+          info_message: USER_ACTION_REPEATED_CAN_CONTINUE,
+          code: 200,
+        });
   } catch (error) {
     /**
      * COMMON ERRORS
@@ -130,6 +142,9 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     return { error_message: error, code: 500 };
   }
 
+  /**
+   * SEND MAGIC LINK TO RESET PASSWORD
+   */
   const transporter = createTransport({
     host: process.env.MAIL_HOST,
     port: process.env.MAIL_POST,
@@ -142,7 +157,7 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
   const mailConfig = {
     from: process.env.MAIL_SENDER,
     to: ResetPassInfo.email,
-    subject: "CodeReviewMe - Reset password - Get a new password",
+    subject: "CodeReviewMe - Reset password",
     html: mailBody(updatedData.token, updatedData.user_id),
   };
 
