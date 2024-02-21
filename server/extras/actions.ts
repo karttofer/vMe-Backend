@@ -29,6 +29,12 @@ import { mailBody } from "./bodys/mail";
 
 const SALT = Number(process.env.PASSWORD_SALT);
 
+/**
+ * @description Create an user
+ * @param destructuredParams Registrarion user info
+ * @param prisma  PrismaClient
+ * @returns Object
+ */
 export const CREATE_NEW_USER = (
   {
     nick_name,
@@ -71,6 +77,12 @@ export const CREATE_NEW_USER = (
   });
 };
 
+/**
+ * @description Login
+ * @param LoginInfo User login information
+ * @param prisma PrismaLClient
+ * @returns Object
+ */
 export const LOGIN = async (LoginInfo: ILoginPost, prisma: PrismaClient) => {
   const user = await prisma.reviewer.findUnique({
     where: {
@@ -94,6 +106,12 @@ export const LOGIN = async (LoginInfo: ILoginPost, prisma: PrismaClient) => {
   return { success_message: USER_FOUND };
 };
 
+/**
+ * @description Send magic link to reset password
+ * @param ResetPassInfo
+ * @param prisma
+ * @returns Object
+ */
 export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
   ResetPassInfo: IResetPasswordMagicLinkPost,
   prisma: PrismaClient
