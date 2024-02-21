@@ -11,21 +11,23 @@ datasource db {
 }
 
 model Reviewer {
-  id            Int          @id @default(autoincrement())
-  nick_name     String
-  last_name     String
-  user_img      String
-  password      String
-  email         String       @unique
-  location      String
-  linkedIn_user String
-  github_user   String
-  Challenges    Challenges[]
-  role          ROLES        @default(USER)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id                Int               @id @default(autoincrement())
+  user_unique_token String            @unique
+  nick_name         String
+  last_name         String
+  user_img          String
+  password          String
+  email             String            @unique
+  location          String
+  linkedIn_user     String
+  github_user       String
+  Challenges        Challenges[]
+  role              ROLES             @default(USER)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  ResetPassword     ReviewerActions[]
 
-  @@unique([id, nick_name])
+  @@unique([user_unique_token, nick_name])
 }
 
 model Companies {
@@ -34,10 +36,18 @@ model Companies {
   Challenges   Challenges[]
 }
 
+model ReviewerActions {
+  id          Int      @id @default(autoincrement())
+  user        Reviewer @relation(fields: [user_id], references: [user_unique_token])
+  user_id     String   @unique
+  token       String
+  expireToken DateTime
+}
+
 model Challenges {
   name            String    @unique
-  creator         Reviewer  @relation(fields: [creator_id, creator_name], references: [id, nick_name])
-  creator_id      Int
+  creator         Reviewer  @relation(fields: [creator_id, creator_name], references: [user_unique_token, nick_name])
+  creator_id      String
   creator_name    String
   challenges_type String[]
   company         Companies @relation(fields: [used_by_company], references: [company_name])

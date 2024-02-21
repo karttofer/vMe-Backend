@@ -12,7 +12,11 @@ import {
 } from "./models/requests";
 
 // Actions
-import { CREATE_NEW_USER, LOGIN } from "./actions";
+import {
+  CREATE_NEW_USER,
+  LOGIN,
+  SEND_MAGIC_LINK_RESET_PASSWORD,
+} from "./actions";
 /*
  ROUTE CALLER
 */
@@ -38,7 +42,7 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     app.post("/login", (req: Request<{}, {}, ILoginPost>, res: Response) => {
       LOGIN(req.body, prisma).then((actionRes) => {
         console.log(actionRes);
-        res.send({ Login: actionRes });
+        res.send({ message: actionRes });
       });
     });
 
@@ -54,7 +58,9 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     app.post(
       "/create/magic-link/reset-password",
       (req: Request<{}, {}, IResetPasswordMagicLinkPost>, res: Response) => {
-        res.send({ maginLink: req.body });
+        SEND_MAGIC_LINK_RESET_PASSWORD(req.body, prisma).then((actionRes) => {
+          res.send({ message: actionRes });
+        });
       }
     );
     app.post(
@@ -73,3 +79,5 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     console.error(`Ups, Something's wrong happening here -> `, Error);
   }
 };
+
+//rfmw iioe vgkv phmn
