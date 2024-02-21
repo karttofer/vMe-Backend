@@ -31,5 +31,6 @@ export interface IResetPasswordMagicLinkPost {
   email: string;
 }
 export interface IResetPasswordPost {
+  user_unique_token: string;
   new_password: string;
 }
