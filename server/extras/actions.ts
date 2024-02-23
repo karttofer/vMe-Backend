@@ -150,12 +150,12 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
 
     !existAction
       ? await prisma.reviewerActions.create({
-          data: updatedData,
-        })
+        data: updatedData,
+      })
       : console.log({
-          info_message: USER_ACTION_REPEATED_CAN_CONTINUE,
-          code: 200,
-        });
+        info_message: USER_ACTION_REPEATED_CAN_CONTINUE,
+        code: 200,
+      });
   } catch (error) {
     /**
      * COMMON ERRORS
@@ -171,13 +171,15 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
    * SEND MAGIC LINK TO RESET PASSWORD
    */
   const transporter = createTransport({
-    host: process.env.MAIL_HOST,
-    port: process.env.MAIL_POST,
+    host: process.env.BREVO_HOST,
+    port: process.env.BREVO_PORT,
     auth: {
       user: process.env.MAIL_SENDER,
       pass: process.env.BREVO_KEY,
     },
   });
+
+  console.log(transporter)
 
   const mailConfig = {
     from: process.env.MAIL_SENDER,
@@ -185,12 +187,12 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     subject: "CodeReviewMe - Reset password",
     html: mailBody(updatedData.token, updatedData.user_id),
   };
-
+  console.log(process.env.MAIL_SENDER, ResetPassInfo.email)
   transporter.sendMail(mailConfig, (error) => {
     return { error_message: THIRD_PARTY_ERROR, error };
   });
 
-  return { sucess_message: MAGIC_LINK_RESET_PASSWORD_SENT, code: 200 };
+  return { sucess_message: `${MAGIC_LINK_RESET_PASSWORD_SENT} - TO - ${ResetPassInfo.email}`, code: 200 };
 };
 
 //TODO: remember the actions, we need a better system to handle thiss
