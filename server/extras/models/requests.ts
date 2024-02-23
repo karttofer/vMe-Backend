@@ -12,6 +12,7 @@ export interface IUserEditPost {
   github_user: string;
   linkedIn_user: string;
   user_img: string;
+  user_unique_token: string;
 }
 /*
  CREATE ROUTES

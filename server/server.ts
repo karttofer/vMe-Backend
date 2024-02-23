@@ -23,6 +23,6 @@ app.use(bodyParser.json());
  * SERVER IS RUNNING
  */
 app.listen(port, () => {
-  console.log("SERVER IS RUNNING AT PORT", port);
+  console.log("SERVER IS RUNNING AT PORT:", port);
   routerCaller(app, prisma);
 });

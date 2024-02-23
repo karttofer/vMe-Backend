@@ -18,14 +18,15 @@ import {
   SEND_MAGIC_LINK_RESET_PASSWORD,
   VERIFY_MAGIC_LINK_RESET_PASSWORD_EXPIRED,
   RESET_PASSWORD,
+  EDIT_USER_INFORMATION
 } from "./actions";
 /*
  ROUTE CALLER
 */
 export const routerCaller = (app, prisma: PrismaClient) => {
   try {
-    app.get("/", (req: Request, res: Response) => {
-      res.send("Hello World!");
+    app.get("/", (_: Request, res: Response) => {
+      res.send("Hi human - This is the main - page of code_review_me_backend");
     });
 
     /**
@@ -34,7 +35,10 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     app.put(
       "/user/edit",
       (req: Request<{}, {}, IUserEditPost>, res: Response) => {
-        res.send({ user: req.body });
+        EDIT_USER_INFORMATION(req.body, prisma).then(response => {
+          res.send({ user: response });
+
+        })
       }
     );
 
@@ -44,7 +48,6 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     app.post("/login", (req: Request<{}, {}, ILoginPost>, res: Response) => {
       LOGIN(req.body, prisma)
         .then((actionRes) => {
-          console.log(actionRes);
           res.send({ message: actionRes });
         })
         .catch((error) => {
