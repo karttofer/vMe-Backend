@@ -10,7 +10,7 @@ import {
   USER_WRONG_PASSWORD,
   THIRD_PARTY_ERROR,
   P2003_PRISMA,
-  ERROR_TOKEN_NOT_FOUND,
+  TOKEN_NOT_FOUND,
   CANT_BE_THE_SAME_PASSWORD,
 } from "./messages/errors";
 import {
@@ -18,6 +18,7 @@ import {
   MAGIC_LINK_RESET_PASSWORD_SENT,
   TOKEN_CONTINUE_WORKING_WELL,
   SUCCESS_USER_CHANGE_PASSWORD,
+  USER_EDITED_INFORMATION_CORRECTLY
 } from "./messages/sucess";
 import { USER_ACTION_REPEATED_CAN_CONTINUE } from "./messages/alerts";
 
@@ -27,10 +28,12 @@ import {
   ILoginPost,
   IResetPasswordMagicLinkPost,
   IResetPasswordPost,
+  IUserEditPost
 } from "./models/requests";
 
 // Helpers
 import { crypt } from "../helpers/bcrypt";
+import { userExistSingleValidation } from "../helpers/validations";
 
 // Configs
 import { mailBody } from "./bodys/mail";
@@ -110,7 +113,7 @@ export const LOGIN = async (LoginInfo: ILoginPost, prisma: PrismaClient) => {
     return { error_message: USER_WRONG_PASSWORD };
   }
 
-  return { success_message: USER_FOUND };
+  return { success_message: USER_FOUND, user_info: user.user_unique_token };
 };
 
 /**
@@ -179,15 +182,13 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     },
   });
 
-  console.log(transporter)
-
   const mailConfig = {
     from: process.env.MAIL_SENDER,
     to: ResetPassInfo.email,
     subject: "CodeReviewMe - Reset password",
     html: mailBody(updatedData.token, updatedData.user_id),
   };
-  console.log(process.env.MAIL_SENDER, ResetPassInfo.email)
+
   transporter.sendMail(mailConfig, (error) => {
     return { error_message: THIRD_PARTY_ERROR, error };
   });
@@ -213,7 +214,7 @@ export const VERIFY_MAGIC_LINK_RESET_PASSWORD_EXPIRED = async (
 
   if (!tokenExist) {
     return {
-      error_message: ERROR_TOKEN_NOT_FOUND,
+      error_message: TOKEN_NOT_FOUND,
       token_valid: false,
       code: 404,
     };
@@ -274,7 +275,34 @@ export const RESET_PASSWORD = async (
         console.error("FALTA ERROR:", error);
       } finally {
         await prisma.$disconnect();
+        console.error("PRISMA IS OFF");
       }
     });
   });
 };
+
+export const EDIT_USER_INFORMATION = async (userInfoToChange: IUserEditPost, prisma: PrismaClient) => {
+  const userExist = await userExistSingleValidation('user_unique_token', userInfoToChange.user_unique_token, prisma)
+
+  if (userExist.code !== 200) {
+    return userExist.error_message
+  }
+
+  try {
+    await prisma.reviewer.update({
+      where: {
+        user_unique_token: userInfoToChange.user_unique_token
+      },
+      data: {
+        ...userInfoToChange
+      }
+    })
+  } catch (error) {
+    console.error("FALTA ERROR:", error);
+  }
+
+  return {
+    success_message: USER_EDITED_INFORMATION_CORRECTLY,
+    code: 200,
+  }
+}
