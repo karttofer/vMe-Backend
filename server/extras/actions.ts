@@ -4,6 +4,8 @@ import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { createTransport } from "nodemailer";
 
+// Compilers
+import { getQuickJS } from "quickjs-emscripten"
 // Messages
 import {
   USER_NO_FOUND,
@@ -306,3 +308,65 @@ export const EDIT_USER_INFORMATION = async (userInfoToChange: IUserEditPost, pri
     code: 200,
   }
 }
+
+
+//@TODO Add Mocha/Chai
+interface RunInterface {
+  fs: Array<{
+    name: string,
+    code: string
+  }>,
+  test: Array<{
+    name: string,
+    input: string,
+    expected: string
+  }>
+}
+export const RUN_Simple = async (runConfig: RunInterface, prisma?: PrismaClient) => {
+  const QuickJS = await getQuickJS();
+  const vm = QuickJS.newContext();
+
+  const fnHandle = vm.newFunction("log", (...args) => {
+    const nativeArgs = args.map(vm.dump)
+    return console.log(nativeArgs)
+  })
+
+  // Native object that helps the user
+  vm.setProp(vm.global, "log", fnHandle)
+  fnHandle.dispose()
+
+  const runTest = (description, testFunction) => {
+    try {
+      testFunction();
+      console.log('✓', description);
+    } catch (error) {
+      console.error('✗', description);
+      console.error('  ', error.message);
+    }
+  };
+
+  const dynamicFunctions = runConfig.fs
+
+  const dynamicTestCases = runConfig.test
+
+  dynamicFunctions.forEach((func) => {
+    vm.evalCode(func.code);
+  });
+
+  dynamicTestCases.forEach((testCase) => {
+    runTest(`${testCase.name} - Test Case`, () => {
+      const result: any = vm.evalCode(`${testCase.name}(${JSON.stringify(testCase.input)})`);
+      const output = vm.dump(result.value);
+
+      if (result.error) {
+        throw new Error(vm.dump(result.error));
+      }
+
+      if (output !== testCase.expected) {
+        throw new Error(`Expected "${testCase.expected}", but got ${output}`);
+      }
+    });
+  });
+
+  vm.dispose();
+};

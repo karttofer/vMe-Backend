@@ -45,13 +45,22 @@ model ReviewerActions {
 }
 
 model Challenges {
-  name            String    @unique
-  creator         Reviewer  @relation(fields: [creator_id, creator_name], references: [user_unique_token, nick_name])
+  challenge_token String         @unique
+  name            String
+  creator         Reviewer       @relation(fields: [creator_id, creator_name], references: [user_unique_token, nick_name])
   creator_id      String
   creator_name    String
   challenges_type String[]
-  company         Companies @relation(fields: [used_by_company], references: [company_name])
+  company         Companies      @relation(fields: [used_by_company], references: [company_name])
   used_by_company String
+  RunChallenge    RunChallenge[]
+}
+
+model RunChallenge {
+  id                     Challenges @relation(fields: [challenge_unique_token], references: [challenge_token])
+  challenge_unique_token String     @unique
+  language               String
+  code                   String
 }
 
 enum ROLES {

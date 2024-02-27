@@ -18,7 +18,8 @@ import {
   SEND_MAGIC_LINK_RESET_PASSWORD,
   VERIFY_MAGIC_LINK_RESET_PASSWORD_EXPIRED,
   RESET_PASSWORD,
-  EDIT_USER_INFORMATION
+  EDIT_USER_INFORMATION,
+  RUN_Simple
 } from "./actions";
 /*
  ROUTE CALLER
@@ -110,6 +111,20 @@ export const routerCaller = (app, prisma: PrismaClient) => {
           console.error(error);
         });
     });
+
+    /**
+     * POST
+     */
+    app.post(
+      "/run",
+      (req: Request<{}, {}, any>, res: Response) => {
+        RUN_Simple(req.body, prisma).then(console.log)
+
+        res.send({
+          message: `Ey, ${req.body.nick_name} you're now part of the family!`,
+        });
+      }
+    );
   } catch (error) {
     console.error(`Ups, Something's wrong happening here -> `, Error);
   }
