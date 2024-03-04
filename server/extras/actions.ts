@@ -5,7 +5,7 @@ import * as bcrypt from "bcrypt";
 import { createTransport } from "nodemailer";
 
 // Compilers
-import { getQuickJS } from "quickjs-emscripten"
+import { getQuickJS } from "quickjs-emscripten";
 // Messages
 import {
   USER_NO_FOUND,
@@ -20,7 +20,7 @@ import {
   MAGIC_LINK_RESET_PASSWORD_SENT,
   TOKEN_CONTINUE_WORKING_WELL,
   SUCCESS_USER_CHANGE_PASSWORD,
-  USER_EDITED_INFORMATION_CORRECTLY
+  USER_EDITED_INFORMATION_CORRECTLY,
 } from "./messages/sucess";
 import { USER_ACTION_REPEATED_CAN_CONTINUE } from "./messages/alerts";
 
@@ -30,7 +30,8 @@ import {
   ILoginPost,
   IResetPasswordMagicLinkPost,
   IResetPasswordPost,
-  IUserEditPost
+  IUserEditPost,
+  RunInterface
 } from "./models/requests";
 
 // Helpers
@@ -155,12 +156,12 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
 
     !existAction
       ? await prisma.reviewerActions.create({
-        data: updatedData,
-      })
+          data: updatedData,
+        })
       : console.log({
-        info_message: USER_ACTION_REPEATED_CAN_CONTINUE,
-        code: 200,
-      });
+          info_message: USER_ACTION_REPEATED_CAN_CONTINUE,
+          code: 200,
+        });
   } catch (error) {
     /**
      * COMMON ERRORS
@@ -195,7 +196,10 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     return { error_message: THIRD_PARTY_ERROR, error };
   });
 
-  return { sucess_message: `${MAGIC_LINK_RESET_PASSWORD_SENT} - TO - ${ResetPassInfo.email}`, code: 200 };
+  return {
+    sucess_message: `${MAGIC_LINK_RESET_PASSWORD_SENT} - TO - ${ResetPassInfo.email}`,
+    code: 200,
+  };
 };
 
 //TODO: remember the actions, we need a better system to handle thiss
@@ -283,22 +287,29 @@ export const RESET_PASSWORD = async (
   });
 };
 
-export const EDIT_USER_INFORMATION = async (userInfoToChange: IUserEditPost, prisma: PrismaClient) => {
-  const userExist = await userExistSingleValidation('user_unique_token', userInfoToChange.user_unique_token, prisma)
+export const EDIT_USER_INFORMATION = async (
+  userInfoToChange: IUserEditPost,
+  prisma: PrismaClient
+) => {
+  const userExist = await userExistSingleValidation(
+    "user_unique_token",
+    userInfoToChange.user_unique_token,
+    prisma
+  );
 
   if (userExist.code !== 200) {
-    return userExist.error_message
+    return userExist.error_message;
   }
 
   try {
     await prisma.reviewer.update({
       where: {
-        user_unique_token: userInfoToChange.user_unique_token
+        user_unique_token: userInfoToChange.user_unique_token,
       },
       data: {
-        ...userInfoToChange
-      }
-    })
+        ...userInfoToChange,
+      },
+    });
   } catch (error) {
     console.error("FALTA ERROR:", error);
   }
@@ -306,48 +317,38 @@ export const EDIT_USER_INFORMATION = async (userInfoToChange: IUserEditPost, pri
   return {
     success_message: USER_EDITED_INFORMATION_CORRECTLY,
     code: 200,
-  }
-}
+  };
+};
 
-
-//@TODO Add Mocha/Chai
-interface RunInterface {
-  fs: Array<{
-    name: string,
-    code: string
-  }>,
-  test: Array<{
-    name: string,
-    input: string,
-    expected: string
-  }>
-}
-export const RUN_Simple = async (runConfig: RunInterface, prisma?: PrismaClient) => {
+export const RUN_Simple = async (
+  runConfig: RunInterface,
+  prisma?: PrismaClient
+) => {
   const QuickJS = await getQuickJS();
   const vm = QuickJS.newContext();
 
   const fnHandle = vm.newFunction("log", (...args) => {
-    const nativeArgs = args.map(vm.dump)
-    return console.log(nativeArgs)
-  })
+    const nativeArgs = args.map(vm.dump);
+    return console.log(nativeArgs);
+  });
 
   // Native object that helps the user
-  vm.setProp(vm.global, "log", fnHandle)
-  fnHandle.dispose()
+  vm.setProp(vm.global, "log", fnHandle);
+  fnHandle.dispose();
 
   const runTest = (description, testFunction) => {
     try {
       testFunction();
-      console.log('✓', description);
+      console.log("✓", description);
     } catch (error) {
-      console.error('✗', description);
-      console.error('  ', error.message);
+      console.error("✗", description);
+      console.error("  ", error.message);
     }
   };
 
-  const dynamicFunctions = runConfig.fs
+  const dynamicFunctions = runConfig.fs;
 
-  const dynamicTestCases = runConfig.test
+  const dynamicTestCases = runConfig.test;
 
   dynamicFunctions.forEach((func) => {
     vm.evalCode(func.code);
@@ -355,7 +356,10 @@ export const RUN_Simple = async (runConfig: RunInterface, prisma?: PrismaClient)
 
   dynamicTestCases.forEach((testCase) => {
     runTest(`${testCase.name} - Test Case`, () => {
-      const result: any = vm.evalCode(`${testCase.name}(${JSON.stringify(testCase.input)})`);
+      const result: any = vm.evalCode(
+        `${testCase.name}(${testCase.input})`
+      );
+    
       const output = vm.dump(result.value);
 
       if (result.error) {
@@ -365,6 +369,8 @@ export const RUN_Simple = async (runConfig: RunInterface, prisma?: PrismaClient)
       if (output !== testCase.expected) {
         throw new Error(`Expected "${testCase.expected}", but got ${output}`);
       }
+
+      return true
     });
   });
 

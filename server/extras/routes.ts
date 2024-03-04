@@ -118,11 +118,12 @@ export const routerCaller = (app, prisma: PrismaClient) => {
     app.post(
       "/run",
       (req: Request<{}, {}, any>, res: Response) => {
-        RUN_Simple(req.body, prisma).then(console.log)
-
-        res.send({
-          message: `Ey, ${req.body.nick_name} you're now part of the family!`,
-        });
+        RUN_Simple(req.body, prisma).then(response => {
+          res.send({
+            message: response,
+            code: 200
+          });
+        })
       }
     );
   } catch (error) {

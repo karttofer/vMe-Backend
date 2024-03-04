@@ -11,7 +11,7 @@ dotenv.config();
 
 export const app: express.Express = express();
 const prisma = new PrismaClient();
-const port = process.env.HOST_POSRT || 3000;
+const port = process.env.HOST_PORT || 9090;
 
 /**
  * SERVER CONFIGS
