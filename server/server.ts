@@ -1,5 +1,5 @@
 // Dependenceis
-import * as express from "express";
+import  express from "express";
 import * as bodyParser from "body-parser";
 import { PrismaClient } from "@prisma/client";
 import * as dotenv from "dotenv";

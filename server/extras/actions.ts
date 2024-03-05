@@ -1,11 +1,11 @@
 //TODO See all the messages? We need to delete the status from the file and put them in the messages files
 // Deps
-import { PrismaClient } from "@prisma/client";
-import * as bcrypt from "bcrypt";
-import { createTransport } from "nodemailer";
+import { PrismaClient } from '@prisma/client'
+import * as bcrypt from 'bcrypt'
+import { createTransport } from 'nodemailer'
 
 // Compilers
-import { getQuickJS } from "quickjs-emscripten";
+import { getQuickJS } from 'quickjs-emscripten'
 // Messages
 import {
   USER_NO_FOUND,
@@ -14,15 +14,15 @@ import {
   P2003_PRISMA,
   TOKEN_NOT_FOUND,
   CANT_BE_THE_SAME_PASSWORD,
-} from "./messages/errors";
+} from './messages/errors'
 import {
   USER_FOUND,
   MAGIC_LINK_RESET_PASSWORD_SENT,
   TOKEN_CONTINUE_WORKING_WELL,
   SUCCESS_USER_CHANGE_PASSWORD,
   USER_EDITED_INFORMATION_CORRECTLY,
-} from "./messages/sucess";
-import { USER_ACTION_REPEATED_CAN_CONTINUE } from "./messages/alerts";
+} from './messages/sucess'
+import { USER_ACTION_REPEATED_CAN_CONTINUE } from './messages/alerts'
 
 // Models
 import {
@@ -31,17 +31,17 @@ import {
   IResetPasswordMagicLinkPost,
   IResetPasswordPost,
   IUserEditPost,
-  RunInterface
-} from "./models/requests";
+  RunInterface,
+} from './models/requests'
 
 // Helpers
-import { crypt } from "../helpers/bcrypt";
-import { userExistSingleValidation } from "../helpers/validations";
+import { crypt } from '../helpers/bcrypt'
+import { userExistSingleValidation } from '../helpers/validations'
 
 // Configs
-import { mailBody } from "./bodys/mail";
+import { mailBody } from './bodys/mail'
 
-const SALT = Number(process.env.PASSWORD_SALT);
+const SALT = Number(process.env.PASSWORD_SALT)
 
 /**
  * @description Create an user
@@ -63,9 +63,9 @@ export const CREATE_NEW_USER = (
   prisma: PrismaClient
 ) => {
   bcrypt.genSalt(SALT, (saltError, salt) => {
-    if (saltError) throw saltError;
+    if (saltError) throw saltError
     bcrypt.hash(password, salt, async (hashError, hash) => {
-      if (hashError) throw hashError;
+      if (hashError) throw hashError
 
       try {
         await prisma.reviewer.create({
@@ -80,15 +80,15 @@ export const CREATE_NEW_USER = (
             linkedIn_user,
             github_user,
           },
-        });
+        })
       } catch (error) {
-        console.error("FALTA ERROR:", error);
+        console.error('FALTA ERROR:', error)
       } finally {
-        await prisma.$disconnect();
+        await prisma.$disconnect()
       }
-    });
-  });
-};
+    })
+  })
+}
 
 /**
  * @description Login the user, allow to enter to the app
@@ -101,23 +101,23 @@ export const LOGIN = async (LoginInfo: ILoginPost, prisma: PrismaClient) => {
     where: {
       email: LoginInfo.email,
     },
-  });
+  })
 
   if (user === null) {
-    return { error_message: USER_NO_FOUND };
+    return { error_message: USER_NO_FOUND }
   }
 
   const passwordComparation = await bcrypt.compare(
     LoginInfo.password,
     user.password
-  );
+  )
 
   if (!passwordComparation) {
-    return { error_message: USER_WRONG_PASSWORD };
+    return { error_message: USER_WRONG_PASSWORD }
   }
 
-  return { success_message: USER_FOUND, user_info: user.user_unique_token };
-};
+  return { success_message: USER_FOUND, user_info: user.user_unique_token }
+}
 
 /**
  * @description Send magic link to reset password
@@ -133,10 +133,10 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     where: {
       email: ResetPassInfo.email,
     },
-  });
+  })
 
   if (!user) {
-    return { error_message: USER_NO_FOUND, code: 404 };
+    return { error_message: USER_NO_FOUND, code: 404 }
   }
   /**
    * I prefer to use bcrypt to create a salt token
@@ -145,14 +145,14 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
     user_id: user.user_unique_token,
     token: crypt(SALT, user.email),
     expireToken: new Date(Date.now() + 1 * 60 * 60 * 1000),
-  };
+  }
   //TODO we need to make a better system for actions, allowing the user to make repeat actions
   try {
     const existAction = await prisma.reviewerActions.findUnique({
       where: {
         user_id: updatedData.user_id,
       },
-    });
+    })
 
     !existAction
       ? await prisma.reviewerActions.create({
@@ -161,46 +161,47 @@ export const SEND_MAGIC_LINK_RESET_PASSWORD = async (
       : console.log({
           info_message: USER_ACTION_REPEATED_CAN_CONTINUE,
           code: 200,
-        });
-  } catch (error) {
+        })
+  } catch (error: unknown) {
     /**
      * COMMON ERRORS
      */
-    if (error.code === "P2003") {
-      return { error_message: P2003_PRISMA, code: 500 };
+    if ((error as { code: string }).code === 'P2003') {
+      return { error_message: P2003_PRISMA, code: 500 }
     }
 
-    return { error_message: error, code: 500 };
+    return { error_message: error, code: 500 }
   }
 
   /**
    * SEND MAGIC LINK TO RESET PASSWORD
    */
   const transporter = createTransport({
+    // @ts-ignore: This is the correct config ref: https://nodemailer.com/smtp/
     host: process.env.BREVO_HOST,
     port: process.env.BREVO_PORT,
     auth: {
       user: process.env.MAIL_SENDER,
       pass: process.env.BREVO_KEY,
     },
-  });
+  })
 
   const mailConfig = {
     from: process.env.MAIL_SENDER,
     to: ResetPassInfo.email,
-    subject: "CodeReviewMe - Reset password",
+    subject: 'CodeReviewMe - Reset password',
     html: mailBody(updatedData.token, updatedData.user_id),
-  };
+  }
 
-  transporter.sendMail(mailConfig, (error) => {
-    return { error_message: THIRD_PARTY_ERROR, error };
-  });
+  transporter.sendMail(mailConfig, (error: unknown) => {
+    return { error_message: THIRD_PARTY_ERROR, error }
+  })
 
   return {
     sucess_message: `${MAGIC_LINK_RESET_PASSWORD_SENT} - TO - ${ResetPassInfo.email}`,
     code: 200,
-  };
-};
+  }
+}
 
 //TODO: remember the actions, we need a better system to handle thiss
 /**
@@ -216,22 +217,22 @@ export const VERIFY_MAGIC_LINK_RESET_PASSWORD_EXPIRED = async (
     where: {
       token,
     },
-  });
+  })
 
   if (!tokenExist) {
     return {
       error_message: TOKEN_NOT_FOUND,
       token_valid: false,
       code: 404,
-    };
+    }
   }
 
   return {
     error_message: TOKEN_CONTINUE_WORKING_WELL,
     token_valid: true,
     code: 200,
-  };
-};
+  }
+}
 
 /**
  * @description Reset user password
@@ -247,22 +248,22 @@ export const RESET_PASSWORD = async (
     where: {
       user_unique_token,
     },
-  });
+  })
 
   if (!user) {
-    return { error_message: USER_NO_FOUND, code: 404 };
+    return { error_message: USER_NO_FOUND, code: 404 }
   }
 
-  const passwordComparation = await bcrypt.compare(new_password, user.password);
+  const passwordComparation = await bcrypt.compare(new_password, user.password)
 
   if (passwordComparation) {
-    return { error_message: CANT_BE_THE_SAME_PASSWORD, code: 409 };
+    return { error_message: CANT_BE_THE_SAME_PASSWORD, code: 409 }
   }
 
   bcrypt.genSalt(SALT, (saltError, salt) => {
-    if (saltError) throw saltError;
+    if (saltError) throw saltError
     bcrypt.hash(new_password, salt, async (hashError, hash) => {
-      if (hashError) throw hashError;
+      if (hashError) throw hashError
       try {
         prisma.reviewer.update({
           where: {
@@ -271,34 +272,34 @@ export const RESET_PASSWORD = async (
           data: {
             password: hash,
           },
-        });
+        })
 
         return {
           success_message: SUCCESS_USER_CHANGE_PASSWORD,
           code: 200,
-        };
-      } catch (error) {
-        console.error("FALTA ERROR:", error);
+        }
+      } catch (error: unknown) {
+        console.error('FALTA ERROR:', error)
       } finally {
-        await prisma.$disconnect();
-        console.error("PRISMA IS OFF");
+        await prisma.$disconnect()
+        console.error('PRISMA IS OFF')
       }
-    });
-  });
-};
+    })
+  })
+}
 
 export const EDIT_USER_INFORMATION = async (
   userInfoToChange: IUserEditPost,
   prisma: PrismaClient
 ) => {
   const userExist = await userExistSingleValidation(
-    "user_unique_token",
+    'user_unique_token',
     userInfoToChange.user_unique_token,
     prisma
-  );
+  )
 
   if (userExist.code !== 200) {
-    return userExist.error_message;
+    return userExist.error_message
   }
 
   try {
@@ -309,70 +310,68 @@ export const EDIT_USER_INFORMATION = async (
       data: {
         ...userInfoToChange,
       },
-    });
+    })
   } catch (error) {
-    console.error("FALTA ERROR:", error);
+    console.error('FALTA ERROR:', error)
   }
 
   return {
     success_message: USER_EDITED_INFORMATION_CORRECTLY,
     code: 200,
-  };
-};
+  }
+}
 
 export const RUN_Simple = async (
   runConfig: RunInterface,
   prisma?: PrismaClient
 ) => {
-  const QuickJS = await getQuickJS();
-  const vm = QuickJS.newContext();
+  const QuickJS = await getQuickJS()
+  const vm = QuickJS.newContext()
 
-  const fnHandle = vm.newFunction("log", (...args) => {
-    const nativeArgs = args.map(vm.dump);
-    return console.log(nativeArgs);
-  });
+  const fnHandle = vm.newFunction('log', (...args) => {
+    const nativeArgs = args.map(vm.dump)
+    return console.log(nativeArgs)
+  })
 
   // Native object that helps the user
-  vm.setProp(vm.global, "log", fnHandle);
-  fnHandle.dispose();
+  vm.setProp(vm.global, 'log', fnHandle)
+  fnHandle.dispose()
 
-  const runTest = (description, testFunction) => {
+  const runTest = (description: string, testFunction: Function) => {
     try {
-      testFunction();
-      console.log("✓", description);
-    } catch (error) {
-      console.error("✗", description);
-      console.error("  ", error.message);
+      testFunction()
+      console.log('✓', description)
+    } catch (error: unknown) {
+      console.error('✗', description)
+      console.error('  ', error)
     }
-  };
+  }
 
-  const dynamicFunctions = runConfig.fs;
+  const dynamicFunctions = runConfig.fs
 
-  const dynamicTestCases = runConfig.test;
+  const dynamicTestCases = runConfig.test
 
   dynamicFunctions.forEach((func) => {
-    vm.evalCode(func.code);
-  });
+    vm.evalCode(func.code)
+  })
 
   dynamicTestCases.forEach((testCase) => {
     runTest(`${testCase.name} - Test Case`, () => {
-      const result: any = vm.evalCode(
-        `${testCase.name}(${testCase.input})`
-      );
-    
-      const output = vm.dump(result.value);
+      const result: any = vm.evalCode(`${testCase.name}(${testCase.input})`)
+
+      const output = vm.dump(result.value)
 
       if (result.error) {
-        throw new Error(vm.dump(result.error));
+        throw new Error(vm.dump(result.error))
       }
 
       if (output !== testCase.expected) {
-        throw new Error(`Expected "${testCase.expected}", but got ${output}`);
+        throw new Error(`Expected "${testCase.expected}", but got ${output}`)
       }
 
       return true
-    });
-  });
+    })
+  })
 
-  vm.dispose();
-};
+  vm.dispose()
+}

@@ -11,7 +11,7 @@ datasource db {
 }
 
 model Reviewer {
-  id                Int               @id @default(autoincrement())
+  id                String               @id @default(uuid())
   user_unique_token String            @unique
   nick_name         String
   last_name         String
@@ -31,13 +31,13 @@ model Reviewer {
 }
 
 model Companies {
-  id           Int          @id @default(autoincrement())
+  id           String          @id @default(uuid())
   company_name String       @unique
   Challenges   Challenges[]
 }
 
 model ReviewerActions {
-  id          Int      @id @default(autoincrement())
+  id          String      @id @default(uuid())
   user        Reviewer @relation(fields: [user_id], references: [user_unique_token])
   user_id     String   @unique
   token       String   @unique

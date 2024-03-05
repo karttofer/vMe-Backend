@@ -1,10 +1,11 @@
 // Messages
+import { PrismaClient } from "@prisma/client";
 import { USER_NO_FOUND } from "../extras/messages/errors";
 import { USER_FOUND } from "../extras/messages/sucess";
 
-
-export const userExistSingleValidation = async (key: string, value: string, prisma) => {
+export const userExistSingleValidation = async (key: string, value: string, prisma: PrismaClient) => {
     const user = await prisma.reviewer.findUnique({
+         // @ts-ignore: Actually this is valid and working well
         where: {
             [`${key}`]: value,
         },

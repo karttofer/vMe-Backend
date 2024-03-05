@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "ts": "npx tsc ./server/server.ts",
+    "ts": "yarn tsc --esModuleInterop ./server/server.ts",
     "js": "node ./server/server.js",
-    "test": "mocha"
+    "prisma:format": "yarn prisma format",
+    "prisma:generate": "yarn prisma generate",
+    "prisma:migrate:dev": "yarn prisma migrate dev"
   },
   "keywords": [],
   "author": "",
@@ -19,8 +21,10 @@
   },
   "dependencies": {
     "@prisma/client": "^5.9.1",
+    "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.19",
+    "@types/nodemailer": "^6.4.14",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "chai": "^5.1.0",
