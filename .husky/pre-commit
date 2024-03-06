@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Debugging output
+echo "[Husky] Staged files:"
+git diff --cached --name-only
+
+# Check if Dockerfile is staged for commit
+if git diff --cached --name-only | grep -q '^dockerfile$'; then
+    echo "[Husky] Error: Dockerfile is staged for commit. Please remove it before committing."
+    exit 1
+fi
+
+echo "[Husky] COOL"
+# Continue with the default pre-commit hook
+npm run --silent pre-commit

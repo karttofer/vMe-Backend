@@ -1,4 +1,4 @@
-
+# Ignore unnecesary build files/documents
 node_modules
 .git
 .vscode
