@@ -9,7 +9,7 @@ Our guiding principles:
 This configuration is required to run locally the project, in the future my plan is to make a dockerfile to handle all of this. 
 
 **Future me**: I did it! I implemented a Docker file for this. 😏
-```yml
+```.env
 DATABASE_URL=postgresql://<user>:<password>@HOST:<db_post>/<db_name>
 
 #SERVER CONFIG - I recommned 9090 but you literally can put whatever you need in this section
@@ -41,18 +41,18 @@ ENV SALT=<salt-value>
 We are using Yarn to controll all the dependencies, please don't change this and don't create **Pull Request** when you're using **NPM** or it will be rejected.
 
 ### In case you don't have Yarn
-```
+```node
 npm install --global yarn
 ```
 
 ### Finally
-```
+```node
 yarn install
 ```
 ### TypeScript
 We're having a very bad way to transform .ts to .js, since I need to make a depth research about running TypeScript in a correct way, right now I created two scripts to handle this process **this will be better in the future believe me**.
 
-```
+```node
 cd /server
 yarn run ts
 ```
@@ -69,7 +69,7 @@ If everything went well, you can run this command to have everything working in 
 // In case you're using docker
 docker run -p <port>:<port> <docker_img_name/docker_img_id)
 ```
-```shell
+```node
 // In case you're no using docker, remember to run yarn run ts first
 cd server
 yarn run js
