@@ -64,9 +64,9 @@ The only thing you need to keep if you run this commands after configured the .e
   yarn run prisma:migrate:dev // Create databases
 ```
 ### Run!
-If everything went well, you can run this command to have everything working in **PORT**.
+If everything went well, you can run this command to have everything working in **PORT**. Use this command in case you're using docker
 ```shell
-// In case you're using docker
+
 docker run -p <port>:<port> <docker_img_name/docker_img_id)
 ```
 ```node
